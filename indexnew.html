@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DERMATRACK – DOCWELL Edition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="stylesnew.css" />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"
+    ></script>
+    <script defer src="appnew.js"></script>
+  </head>
+  <body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="auth-wrapper" id="authWrapper">
+      <div class="auth-card">
+        <div class="brand-stack">
+          <div class="logo-mark">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <path
+                d="M32 6c10 0 18 8 18 18 0 12-10 22-18 34-8-12-18-22-18-34C14 14 22 6 32 6z"
+                fill="#F2C1C1"
+                stroke="#16A085"
+                stroke-width="2"
+              />
+              <path d="M38 24h8m-4-4v8" stroke="#16A085" stroke-width="2" />
+              <path d="M18 42c6-2 14-1 22-6" stroke="#16A085" stroke-width="2" />
+            </svg>
+          </div>
+          <div>
+            <p class="brand-label">DOCWELL</p>
+            <h1>DERMATRACK – DOCWELL Edition</h1>
+            <p class="tagline">Precision Skin Care. Smart Clinic Control.</p>
+          </div>
+        </div>
+        <form id="loginForm" class="auth-form">
+          <label>
+            Username
+            <input type="text" id="username" placeholder="Admin" required />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              id="password"
+              placeholder="Admin@Docwell"
+              required
+            />
+          </label>
+          <button type="submit" class="btn primary">Sign In</button>
+          <p class="auth-hint">Single Admin Access • Auto-lock enabled</p>
+        </form>
+      </div>
+    </div>
+
+    <div class="lock-screen" id="lockScreen">
+      <div class="auth-card">
+        <h2>Session Locked</h2>
+        <p>Welcome back, Admin. Enter password to unlock.</p>
+        <form id="unlockForm" class="auth-form">
+          <label>
+            Password
+            <input type="password" id="unlockPassword" required />
+          </label>
+          <button type="submit" class="btn primary">Unlock</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="app" id="appRoot">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo-mark small">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <path
+                d="M32 6c10 0 18 8 18 18 0 12-10 22-18 34-8-12-18-22-18-34C14 14 22 6 32 6z"
+                fill="#F2C1C1"
+                stroke="#16A085"
+                stroke-width="2"
+              />
+              <path d="M38 24h8m-4-4v8" stroke="#16A085" stroke-width="2" />
+              <path d="M18 42c6-2 14-1 22-6" stroke="#16A085" stroke-width="2" />
+            </svg>
+          </div>
+          <div>
+            <h3>DOCWELL</h3>
+            <span>DERMATRACK</span>
+          </div>
+        </div>
+        <nav class="nav">
+          <button class="nav-link active" data-section="dashboard">Dashboard</button>
+          <button class="nav-link" data-section="patients">Patients</button>
+          <button class="nav-link" data-section="calendar">Calendar</button>
+          <button class="nav-link" data-section="whatsapp">WhatsApp</button>
+          <button class="nav-link" data-section="inventory">Medicine Stock</button>
+          <button class="nav-link" data-section="analytics">Analytics</button>
+        </nav>
+        <div class="sidebar-footer">
+          <p>DOCWELL Admin</p>
+          <button id="lockBtn" class="btn ghost">Lock Screen</button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="main-header">
+          <div>
+            <h2 id="sectionTitle">Dashboard</h2>
+            <p id="sectionSubtitle">Single-clinic overview for DOCWELL.</p>
+          </div>
+          <div class="header-actions">
+            <button id="downloadPatients" class="btn">Download Excel</button>
+            <button id="downloadInventory" class="btn">Medicine Stock Excel</button>
+          </div>
+        </header>
+
+        <section id="dashboard" class="section active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <h4>Today's Patients</h4>
+              <p id="todayCount">0</p>
+            </div>
+            <div class="stat-card">
+              <h4>Monthly Revenue</h4>
+              <p id="monthlyRevenue">₹0</p>
+            </div>
+            <div class="stat-card">
+              <h4>Pending Payments</h4>
+              <p id="pendingPayments">₹0</p>
+            </div>
+            <div class="stat-card">
+              <h4>Low Stock Alerts</h4>
+              <p id="lowStockCount">0</p>
+            </div>
+          </div>
+          <div class="grid-two">
+            <div class="card">
+              <h3>Upcoming Appointments</h3>
+              <div id="upcomingAppointments" class="list"></div>
+            </div>
+            <div class="card">
+              <h3>Top Procedures</h3>
+              <div id="topProcedures" class="list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="patients" class="section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Patient Records</h3>
+              <button id="newPatientBtn" class="btn primary">Add Patient</button>
+            </div>
+            <div class="table-controls">
+              <input
+                id="patientSearch"
+                type="search"
+                placeholder="Search patient, procedure, concern"
+              />
+              <input id="patientDateFilter" type="date" />
+              <select id="patientFilter">
+                <option value="">All Records</option>
+                <option value="pending">Pending Payments</option>
+                <option value="today">Today</option>
+              </select>
+            </div>
+            <div class="table-wrapper">
+              <table id="patientTable">
+                <thead>
+                  <tr>
+                    <th>SN</th>
+                    <th>Visit Date</th>
+                    <th>Patient</th>
+                    <th>Concern</th>
+                    <th>Procedure</th>
+                    <th>Session</th>
+                    <th>Total Bill</th>
+                    <th>Paid</th>
+                    <th>Pending</th>
+                    <th>Status</th>
+                    <th>Next Appointment</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section id="calendar" class="section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Appointment Calendar</h3>
+              <div class="calendar-controls">
+                <button id="weekViewBtn" class="btn">Week</button>
+                <button id="dayViewBtn" class="btn ghost">Day</button>
+                <input type="date" id="calendarDate" />
+              </div>
+            </div>
+            <div id="calendarView" class="calendar-view"></div>
+          </div>
+        </section>
+
+        <section id="whatsapp" class="section">
+          <div class="grid-two">
+            <div class="card">
+              <h3>Automation Rules</h3>
+              <ul class="rules">
+                <li>48 hours before appointment</li>
+                <li>24 hours before appointment</li>
+                <li>Same-day morning reminder</li>
+                <li>Missed appointment follow-up</li>
+                <li>Pending payment reminder</li>
+                <li>Session continuation reminder</li>
+              </ul>
+              <div class="template-box">
+                <h4>WhatsApp Template</h4>
+                <p>
+                  Hello {{PatientName}},<br />This is a reminder for your
+                  {{ProcedureName}} appointment at DOCWELL<br />📅 {{Date}} | ⏰
+                  {{Time}}<br /><br />Please reply YES to confirm or RESCHEDULE if
+                  needed.<br />– Team DOCWELL 🌸
+                </p>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <h3>Message Log</h3>
+                <button id="runAutomation" class="btn primary">
+                  Run Hourly Job
+                </button>
+              </div>
+              <div class="table-wrapper">
+                <table id="messageTable">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Patient</th>
+                      <th>Trigger</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="inventory" class="section">
+          <div class="card">
+            <div class="card-header">
+              <h3>Medicine Stock (DOCWELL Sheet View)</h3>
+              <div class="toggle-group">
+                <button id="columnViewBtn" class="btn primary">Column View</button>
+                <button id="listViewBtn" class="btn ghost">List View</button>
+              </div>
+            </div>
+            <div id="inventoryColumnView" class="inventory-columns"></div>
+            <div id="inventoryListView" class="inventory-list hidden">
+              <div class="table-controls">
+                <input
+                  id="inventorySearch"
+                  type="search"
+                  placeholder="Search medicine name"
+                />
+                <select id="inventoryCategoryFilter">
+                  <option value="">All Categories</option>
+                </select>
+              </div>
+              <div class="table-wrapper">
+                <table id="inventoryTable">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Medicine Name</th>
+                      <th>Quantity</th>
+                      <th>Unit</th>
+                      <th>Expiry</th>
+                      <th>Cost</th>
+                      <th>Selling</th>
+                      <th>Reorder</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="analytics" class="section">
+          <div class="grid-two">
+            <div class="card">
+              <h3>Revenue & Payment Summary</h3>
+              <div id="revenueSummary" class="list"></div>
+            </div>
+            <div class="card">
+              <h3>Session Progress</h3>
+              <div id="sessionSummary" class="list"></div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal" id="patientModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="patientModalTitle">Add Patient</h3>
+          <button class="icon-btn" data-close="patientModal">✕</button>
+        </div>
+        <form id="patientForm" class="form-grid">
+          <input type="hidden" name="id" />
+          <label>
+            Visit Date
+            <input type="date" name="visitDate" required />
+          </label>
+          <label>
+            Patient Name
+            <input type="text" name="patientName" required />
+          </label>
+          <label>
+            Age / Gender
+            <input type="text" name="ageGender" placeholder="32 / Female" />
+          </label>
+          <label>
+            Contact Number
+            <input type="tel" name="contact" required />
+          </label>
+          <label>
+            Concern Type
+            <select name="concerns" multiple required>
+              <option>Acne</option>
+              <option>Pigmentation</option>
+              <option>Hair Fall</option>
+              <option>Scarring</option>
+              <option>Anti-Aging</option>
+              <option>Laser Hair Reduction</option>
+              <option>PRP</option>
+              <option>Chemical Peel</option>
+            </select>
+          </label>
+          <label>
+            Consultation Type
+            <select name="consultationType">
+              <option>New</option>
+              <option>Follow-up</option>
+            </select>
+          </label>
+          <label>
+            Procedure Name
+            <input type="text" name="procedureName" required />
+          </label>
+          <label>
+            Package Name
+            <input type="text" name="packageName" />
+          </label>
+          <label>
+            Session No.
+            <input type="text" name="sessionNo" placeholder="2 / 6" />
+          </label>
+          <label>
+            Per Session Cost
+            <input type="number" name="perSessionCost" min="0" />
+          </label>
+          <label>
+            Total Package Cost
+            <input type="number" name="totalPackageCost" min="0" />
+          </label>
+          <label>
+            Consultation Fee
+            <input type="number" name="consultationFee" min="0" />
+          </label>
+          <label>
+            Procedure Fee
+            <input type="number" name="procedureFee" min="0" />
+          </label>
+          <label>
+            Medicine Charges
+            <input type="number" name="medicineCharges" min="0" />
+          </label>
+          <label>
+            Amount Paid
+            <input type="number" name="amountPaid" min="0" />
+          </label>
+          <label>
+            Motivation Notes
+            <textarea name="motivationNotes" rows="2"></textarea>
+          </label>
+          <label>
+            Doctor Remarks
+            <textarea name="doctorRemarks" rows="2"></textarea>
+          </label>
+          <label>
+            Next Appointment Needed?
+            <select name="nextAppointmentNeeded" id="nextAppointmentNeeded">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </label>
+          <div class="appointment-followup" id="followupFields">
+          <label>
+            Next Appointment Date
+            <input type="date" name="nextAppointmentDate" />
+          </label>
+          <label>
+            Preferred Time Slot
+            <input type="time" name="preferredTimeSlot" />
+          </label>
+          </div>
+          <label>
+            Appointment Status
+            <select name="appointmentStatus">
+              <option>Scheduled</option>
+              <option>Completed</option>
+              <option>Missed</option>
+              <option>Cancelled</option>
+            </select>
+          </label>
+          <label>
+            WhatsApp Consent
+            <select name="whatsappConsent">
+              <option value="true">TRUE</option>
+              <option value="false">FALSE</option>
+            </select>
+          </label>
+          <label>
+            Medicine Usage (optional)
+            <select name="medicineCategory" id="medicineCategory"></select>
+          </label>
+          <label>
+            Medicine Name
+            <select name="medicineName" id="medicineName"></select>
+          </label>
+          <label>
+            Quantity Used
+            <input type="number" name="medicineQuantity" min="0" />
+          </label>
+          <label>
+            Manual Stock Correction Reason
+            <input type="text" name="stockCorrectionReason" />
+          </label>
+          <button type="submit" class="btn primary full">Save Record</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal" id="inventoryModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="inventoryModalTitle">Add Medicine</h3>
+          <button class="icon-btn" data-close="inventoryModal">✕</button>
+        </div>
+        <form id="inventoryForm" class="form-grid">
+          <input type="hidden" name="category" />
+          <input type="hidden" name="id" />
+          <label>
+            Medicine Name
+            <input type="text" name="name" required />
+          </label>
+          <label>
+            Quantity Available
+            <input type="number" name="quantity" min="0" required />
+          </label>
+          <label>
+            Unit
+            <select name="unit">
+              <option>tube</option>
+              <option>bottle</option>
+              <option>tablet</option>
+              <option>strip</option>
+            </select>
+          </label>
+          <label>
+            Expiry Date
+            <input type="date" name="expiry" required />
+          </label>
+          <label>
+            Cost Price
+            <input type="number" name="costPrice" min="0" required />
+          </label>
+          <label>
+            Selling Price
+            <input type="number" name="sellingPrice" min="0" required />
+          </label>
+          <label>
+            Reorder Level
+            <input type="number" name="reorderLevel" min="0" required />
+          </label>
+          <button type="submit" class="btn primary full">Save Medicine</button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

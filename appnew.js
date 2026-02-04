@@ -41,6 +41,17 @@ const loadState = async () => {
     state.inventory[item.category].push(item);
   });
 };
+const showApp = () => {
+  elements.authWrapper.style.display = "none";
+  elements.lockScreen.style.display = "none";
+  elements.appRoot.style.display = "flex";
+};
+
+const showLogin = () => {
+  elements.authWrapper.style.display = "flex";
+  elements.lockScreen.style.display = "none";
+  elements.appRoot.style.display = "none";
+};
 
 const elements = {
   authWrapper: document.getElementById("authWrapper"),
@@ -927,11 +938,8 @@ const handleLogin = async (event) => {
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     localStorage.setItem(SESSION_KEY, "active");
 
-    elements.authWrapper.style.display = "none";
-    elements.lockScreen.style.display = "none";
-    elements.appRoot.style.display = "flex";
-
-    await loadState();   // ⬅️ reload Supabase data
+    showApp();              // ✅ FORCE UI CHANGE
+    await loadState();      // ✅ Load Supabase data
     renderAll();
 
     showToast("Welcome back, Admin.", "success");
@@ -939,6 +947,7 @@ const handleLogin = async (event) => {
     showToast("Invalid credentials.", "danger");
   }
 };
+
 
 
 const handleUnlock = (event) => {
@@ -957,14 +966,12 @@ const initializeAuth = () => {
   const session = localStorage.getItem(SESSION_KEY);
 
   if (session === "active") {
-    elements.authWrapper.style.display = "none";
-    elements.lockScreen.style.display = "none";
-    elements.appRoot.style.display = "flex";
+    showApp();
   } else {
-    elements.authWrapper.style.display = "flex";
-    elements.appRoot.style.display = "none";
+    showLogin();
   }
 };
+
 
 
 const registerEventListeners = () => {
@@ -1077,14 +1084,15 @@ const registerEventListeners = () => {
 };
 
 const initialize = async () => {
-  await loadState(); // ⬅️ IMPORTANT
+  await loadState();
   populateMedicineSelectors();
   renderInventoryFilters();
-  initializeAuth();
+  initializeAuth();      // 🔑 decides what is visible
   updateFollowupRequirement("yes");
   renderAll();
   registerEventListeners();
 };
 
 initialize();
+
 

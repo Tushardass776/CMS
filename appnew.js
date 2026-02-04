@@ -1,18 +1,6 @@
-alert("APPNEW.JS IS RUNNING");
-
-const showApp = () => {
-  elements.authWrapper.style.display = "none";
-  elements.lockScreen.style.display = "none";
-  elements.appRoot.style.display = "flex";
-};
-
-const showLogin = () => {
-  elements.authWrapper.style.display = "flex";
-  elements.lockScreen.style.display = "none";
-  elements.appRoot.style.display = "none";
-};
 const ADMIN_USERNAME = "Admin";
 const ADMIN_PASSWORD = "Admin@Docwell";
+const STORAGE_KEY = "docwell_cms_state";
 const SESSION_KEY = "docwell_session";
 const MEDICINE_CATEGORIES = [
   "FACE WASH",
@@ -24,37 +12,13 @@ const MEDICINE_CATEGORIES = [
   "ALL CREAM",
   "TABLETS",
 ];
-const SUPABASE_URL = "https://qtjtudcluxheccttlsik.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0anR1ZGNsdXhoZWNjdHRsc2lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAyMTMwNDcsImV4cCI6MjA4NTc4OTA0N30.9QAOTlC9YAgafYpVliuUXkIbvdjIAew6Cgvh46gJLVg";
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
 const state = {
   patients: [],
   inventory: {},
   messages: [],
   calendarView: "week",
 };
-const loadState = async () => {
-  const { data: patients } = await supabase
-    .from("patients")
-    .select("*");
-
-  const { data: inventory } = await supabase
-    .from("inventory")
-    .select("*");
-
-  state.patients = patients || [];
-  state.inventory = createEmptyInventory();
-
-  (inventory || []).forEach((item) => {
-    state.inventory[item.category].push(item);
-  });
-};
-
 
 const elements = {
   authWrapper: document.getElementById("authWrapper"),
@@ -145,6 +109,21 @@ const createEmptyInventory = () => {
   return inventory;
 };
 
+const loadState = () => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    state.patients = parsed.patients || [];
+    state.inventory = parsed.inventory || createEmptyInventory();
+    state.messages = parsed.messages || [];
+  } else {
+    state.inventory = createEmptyInventory();
+  }
+};
+
+const saveState = () => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+};
 
 const showToast = (message, type = "success") => {
   const toast = document.createElement("div");
@@ -411,6 +390,7 @@ const renderCalendar = () => {
         return;
       }
       patient.nextAppointmentDate = targetDate;
+      saveState();
       renderAll();
       showToast("Appointment rescheduled.", "success");
     });
@@ -574,6 +554,7 @@ const renderAll = () => {
   renderInventoryList();
   renderMessages();
   renderAnalytics();
+  saveState();
 };
 
 const populateMedicineSelectors = () => {
@@ -610,7 +591,7 @@ const updateStockAfterUsage = (patient) => {
   item.quantity = Math.max(0, Number(item.quantity) - usedQuantity);
 };
 
-const handlePatientSubmit = async (event) => {
+const handlePatientSubmit = (event) => {
   event.preventDefault();
   const formData = new FormData(elements.patientForm);
   const data = Object.fromEntries(formData.entries());
@@ -671,44 +652,22 @@ const handlePatientSubmit = async (event) => {
     patientRecord.preferredTimeSlot = "";
   }
 
-  await supabase.from("patients").upsert({
-  id: patientRecord.id,
-  visit_date: patientRecord.visitDate,
-  patient_name: patientRecord.patientName,
-  age_gender: patientRecord.ageGender,
-  contact: patientRecord.contact,
-  concerns: patientRecord.concerns,
-  consultation_type: patientRecord.consultationType,
-  procedure_name: patientRecord.procedureName,
-  package_name: patientRecord.packageName,
-  session_no: patientRecord.sessionNo,
-  per_session_cost: patientRecord.perSessionCost,
-  total_package_cost: patientRecord.totalPackageCost,
-  consultation_fee: patientRecord.consultationFee,
-  procedure_fee: patientRecord.procedureFee,
-  medicine_charges: patientRecord.medicineCharges,
-  amount_paid: patientRecord.amountPaid,
-  motivation_notes: patientRecord.motivationNotes,
-  doctor_remarks: patientRecord.doctorRemarks,
-  next_appointment_needed: patientRecord.nextAppointmentNeeded,
-  next_appointment_date: patientRecord.nextAppointmentDate,
-  preferred_time_slot: patientRecord.preferredTimeSlot,
-  appointment_status: patientRecord.appointmentStatus,
-  whatsapp_consent: patientRecord.whatsappConsent,
-  medicine_category: patientRecord.medicineCategory,
-  medicine_name: patientRecord.medicineName,
-  medicine_quantity: patientRecord.medicineQuantity
-});
+  const existingIndex = state.patients.findIndex(
+    (patient) => patient.id === patientId
+  );
+  if (existingIndex >= 0) {
+    state.patients[existingIndex] = patientRecord;
+    showToast("Patient record updated.", "success");
+  } else {
+    state.patients.push(patientRecord);
+    showToast("Patient record added.", "success");
+  }
 
-updateStockAfterUsage(patientRecord);
+  updateStockAfterUsage(patientRecord);
 
-await loadState();
-renderAll();
-
-showToast("Patient record saved.", "success");
-
-closeModal(elements.patientModal);
-elements.patientForm.reset();
+  closeModal(elements.patientModal);
+  elements.patientForm.reset();
+  renderAll();
 };
 
 const handlePatientEdit = (id) => {
@@ -733,15 +692,13 @@ const handlePatientEdit = (id) => {
   openModal(elements.patientModal);
 };
 
-const handlePatientDelete = async (id) => {
-  await supabase.from("patients").delete().eq("id", id);
+const handlePatientDelete = (id) => {
+  state.patients = state.patients.filter((patient) => patient.id !== id);
   showToast("Patient record deleted.", "warning");
-  await loadState();
   renderAll();
 };
-;
 
-const handleInventorySubmit = async (event) => {
+const handleInventorySubmit = (event) => {
   event.preventDefault();
   const formData = new FormData(elements.inventoryForm);
   const data = Object.fromEntries(formData.entries());
@@ -759,25 +716,19 @@ const handleInventorySubmit = async (event) => {
     reorderLevel: data.reorderLevel,
   };
 
-  await supabase.from("inventory").upsert({
-  id: inventoryItem.id,
-  category: category,
-  name: inventoryItem.name,
-  quantity: inventoryItem.quantity,
-  unit: inventoryItem.unit,
-  expiry: inventoryItem.expiry,
-  cost_price: inventoryItem.costPrice,
-  selling_price: inventoryItem.sellingPrice,
-  reorder_level: inventoryItem.reorderLevel
-});
+  const items = state.inventory[category];
+  const existingIndex = items.findIndex((item) => item.id === itemId);
+  if (existingIndex >= 0) {
+    items[existingIndex] = inventoryItem;
+    showToast("Medicine updated.", "success");
+  } else {
+    items.push(inventoryItem);
+    showToast("Medicine added.", "success");
+  }
 
-showToast("Medicine saved.", "success");
-
-closeModal(elements.inventoryModal);
-elements.inventoryForm.reset();
-
-await loadState();
-renderAll();
+  closeModal(elements.inventoryModal);
+  elements.inventoryForm.reset();
+  renderAll();
 };
 
 const handleInventoryEdit = (id) => {
@@ -793,14 +744,14 @@ const handleInventoryEdit = (id) => {
   openModal(elements.inventoryModal);
 };
 
-const handleInventoryDelete = async (id) => {
-  await supabase.from("inventory").delete().eq("id", id);
-
-showToast("Medicine deleted.", "warning");
-
-await loadState();
-renderAll();
-
+const handleInventoryDelete = (id) => {
+  MEDICINE_CATEGORIES.forEach((category) => {
+    state.inventory[category] = state.inventory[category].filter(
+      (item) => item.id !== id
+    );
+  });
+  showToast("Medicine deleted.", "warning");
+  renderAll();
 };
 
 const handleRunAutomation = () => {
@@ -931,32 +882,20 @@ const handleNavigation = (event) => {
   elements.sectionTitle.textContent = meta.title;
   elements.sectionSubtitle.textContent = meta.subtitle;
 };
-alert("Login function triggered");
 
-const handleLogin = async (event) => {
+const handleLogin = (event) => {
   event.preventDefault();
-
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
-
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     localStorage.setItem(SESSION_KEY, "active");
-
-    document.getElementById("authWrapper").style.display = "none";
-    document.getElementById("lockScreen").style.display = "none";
-    document.getElementById("appRoot").style.display = "flex";
-
-    await loadState();
-    renderAll();
-
+    elements.authWrapper.style.display = "none";
+    elements.appRoot.style.display = "flex";
     showToast("Welcome back, Admin.", "success");
   } else {
     showToast("Invalid credentials.", "danger");
   }
 };
-
-
-
 
 const handleUnlock = (event) => {
   event.preventDefault();
@@ -972,20 +911,13 @@ const handleUnlock = (event) => {
 
 const initializeAuth = () => {
   const session = localStorage.getItem(SESSION_KEY);
-
   if (session === "active") {
-    document.getElementById("authWrapper").style.display = "none";
-    document.getElementById("lockScreen").style.display = "none";
-    document.getElementById("appRoot").style.display = "flex";
+    elements.authWrapper.style.display = "none";
+    elements.lockScreen.style.display = "flex";
   } else {
-    document.getElementById("authWrapper").style.display = "flex";
-    document.getElementById("lockScreen").style.display = "none";
-    document.getElementById("appRoot").style.display = "none";
+    elements.authWrapper.style.display = "flex";
   }
 };
-
-
-
 
 const registerEventListeners = () => {
   elements.loginForm.addEventListener("submit", handleLogin);
@@ -1096,22 +1028,14 @@ const registerEventListeners = () => {
   });
 };
 
-const initialize = async () => {
-  await loadState();
+const initialize = () => {
+  loadState();
   populateMedicineSelectors();
   renderInventoryFilters();
-  // initializeAuth();  ❌ DISABLED
+  initializeAuth();
   updateFollowupRequirement("yes");
   renderAll();
   registerEventListeners();
-
-  // 🔥 FORCE APP OPEN
-  document.getElementById("authWrapper").style.display = "none";
-  document.getElementById("lockScreen").style.display = "none";
-  document.getElementById("appRoot").style.display = "flex";
 };
 
 initialize();
-
-
-

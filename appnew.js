@@ -918,19 +918,28 @@ const handleNavigation = (event) => {
   elements.sectionSubtitle.textContent = meta.subtitle;
 };
 
-const handleLogin = (event) => {
+const handleLogin = async (event) => {
   event.preventDefault();
+
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
+
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     localStorage.setItem(SESSION_KEY, "active");
+
     elements.authWrapper.style.display = "none";
+    elements.lockScreen.style.display = "none";
     elements.appRoot.style.display = "flex";
+
+    await loadState();   // ⬅️ reload Supabase data
+    renderAll();
+
     showToast("Welcome back, Admin.", "success");
   } else {
     showToast("Invalid credentials.", "danger");
   }
 };
+
 
 const handleUnlock = (event) => {
   event.preventDefault();
@@ -946,13 +955,17 @@ const handleUnlock = (event) => {
 
 const initializeAuth = () => {
   const session = localStorage.getItem(SESSION_KEY);
+
   if (session === "active") {
     elements.authWrapper.style.display = "none";
-    elements.lockScreen.style.display = "flex";
+    elements.lockScreen.style.display = "none";
+    elements.appRoot.style.display = "flex";
   } else {
     elements.authWrapper.style.display = "flex";
+    elements.appRoot.style.display = "none";
   }
 };
+
 
 const registerEventListeners = () => {
   elements.loginForm.addEventListener("submit", handleLogin);
@@ -1063,8 +1076,8 @@ const registerEventListeners = () => {
   });
 };
 
-const initialize = () => {
-  loadState();
+const initialize = async () => {
+  await loadState(); // ⬅️ IMPORTANT
   populateMedicineSelectors();
   renderInventoryFilters();
   initializeAuth();
@@ -1074,3 +1087,4 @@ const initialize = () => {
 };
 
 initialize();
+

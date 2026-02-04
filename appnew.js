@@ -938,16 +938,18 @@ const handleLogin = async (event) => {
   const password = document.getElementById("password").value.trim();
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    localStorage.setItem(SESSION_KEY, "active");
+  localStorage.setItem(SESSION_KEY, "active");
 
-    showApp();              // ✅ FORCE UI CHANGE
-    await loadState();      // ✅ Load Supabase data
-    renderAll();
+  // 🔴 HARD FORCE UI (temporary)
+  document.getElementById("authWrapper").style.display = "none";
+  document.getElementById("lockScreen").style.display = "none";
+  document.getElementById("appRoot").style.display = "flex";
 
-    showToast("Welcome back, Admin.", "success");
-  } else {
-    showToast("Invalid credentials.", "danger");
-  }
+  alert("LOGIN SUCCESS – UI FORCED");
+
+  return;
+}
+
 };
 
 

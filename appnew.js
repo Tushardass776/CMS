@@ -1,3 +1,5 @@
+alert("APPNEW.JS IS RUNNING");
+
 const showApp = () => {
   elements.authWrapper.style.display = "none";
   elements.lockScreen.style.display = "none";

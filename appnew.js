@@ -938,19 +938,21 @@ const handleLogin = async (event) => {
   const password = document.getElementById("password").value.trim();
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-  localStorage.setItem(SESSION_KEY, "active");
+    localStorage.setItem(SESSION_KEY, "active");
 
-  // 🔴 HARD FORCE UI (temporary)
-  document.getElementById("authWrapper").style.display = "none";
-  document.getElementById("lockScreen").style.display = "none";
-  document.getElementById("appRoot").style.display = "flex";
+    document.getElementById("authWrapper").style.display = "none";
+    document.getElementById("lockScreen").style.display = "none";
+    document.getElementById("appRoot").style.display = "flex";
 
-  alert("LOGIN SUCCESS – UI FORCED");
+    await loadState();
+    renderAll();
 
-  return;
-}
-
+    showToast("Welcome back, Admin.", "success");
+  } else {
+    showToast("Invalid credentials.", "danger");
+  }
 };
+
 
 
 
@@ -970,11 +972,16 @@ const initializeAuth = () => {
   const session = localStorage.getItem(SESSION_KEY);
 
   if (session === "active") {
-    showApp();
+    document.getElementById("authWrapper").style.display = "none";
+    document.getElementById("lockScreen").style.display = "none";
+    document.getElementById("appRoot").style.display = "flex";
   } else {
-    showLogin();
+    document.getElementById("authWrapper").style.display = "flex";
+    document.getElementById("lockScreen").style.display = "none";
+    document.getElementById("appRoot").style.display = "none";
   }
 };
+
 
 
 

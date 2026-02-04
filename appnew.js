@@ -1,3 +1,14 @@
+const showApp = () => {
+  elements.authWrapper.style.display = "none";
+  elements.lockScreen.style.display = "none";
+  elements.appRoot.style.display = "flex";
+};
+
+const showLogin = () => {
+  elements.authWrapper.style.display = "flex";
+  elements.lockScreen.style.display = "none";
+  elements.appRoot.style.display = "none";
+};
 const ADMIN_USERNAME = "Admin";
 const ADMIN_PASSWORD = "Admin@Docwell";
 const SESSION_KEY = "docwell_session";
@@ -41,17 +52,7 @@ const loadState = async () => {
     state.inventory[item.category].push(item);
   });
 };
-const showApp = () => {
-  elements.authWrapper.style.display = "none";
-  elements.lockScreen.style.display = "none";
-  elements.appRoot.style.display = "flex";
-};
 
-const showLogin = () => {
-  elements.authWrapper.style.display = "flex";
-  elements.lockScreen.style.display = "none";
-  elements.appRoot.style.display = "none";
-};
 
 const elements = {
   authWrapper: document.getElementById("authWrapper"),
@@ -928,6 +929,7 @@ const handleNavigation = (event) => {
   elements.sectionTitle.textContent = meta.title;
   elements.sectionSubtitle.textContent = meta.subtitle;
 };
+alert("Login function triggered");
 
 const handleLogin = async (event) => {
   event.preventDefault();

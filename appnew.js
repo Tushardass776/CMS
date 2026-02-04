@@ -1098,12 +1098,18 @@ const initialize = async () => {
   await loadState();
   populateMedicineSelectors();
   renderInventoryFilters();
-  initializeAuth();      // 🔑 decides what is visible
+  // initializeAuth();  ❌ DISABLED
   updateFollowupRequirement("yes");
   renderAll();
   registerEventListeners();
+
+  // 🔥 FORCE APP OPEN
+  document.getElementById("authWrapper").style.display = "none";
+  document.getElementById("lockScreen").style.display = "none";
+  document.getElementById("appRoot").style.display = "flex";
 };
 
 initialize();
+
 
 

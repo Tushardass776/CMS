@@ -591,3 +591,10 @@ td {
     align-items: flex-start;
   }
 }
+.auth-wrapper[style*="display: none"] {
+  pointer-events: none;
+}
+
+.lock-screen[style*="display: none"] {
+  pointer-events: none;
+}
